@@ -30,16 +30,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Setup Java 17 to match the multi-stage Dockerfile (eclipse-temurin:17-jre-alpine)
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
+      # 2. Setup Go for the remaining Go modules (tools/ and mi/tests/)
       - uses: actions/setup-go@v5
         with:
-          go-version-file: mocks/customer-service/go.mod
-          cache: false
+          go-version-file: 'tools/go.mod'
+          cache: true
 
       - name: Build & package
         run: scripts/build.sh --skip-tests --version "$CAR_VERSION"
@@ -53,7 +55,9 @@ jobs:
           name: artifacts-${{ env.CAR_VERSION }}
           path: |
             mi/target/cars/*.car
-            dist/apim
+            dist/apim/*.zip
+            mocks/customer-service-springboot/target/*.jar
+            mocks/loan-eligibility-soap-springboot/target/*.jar
 
       - name: Dev environment
         run: |
