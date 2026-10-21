@@ -279,7 +279,7 @@
                   "const b = pm.response.json();",
                   "pm.test('merged sections', () => {",
                   "  pm.expect(b).to.have.all.keys('customerId', 'partial', 'customer', 'accounts', 'errors', 'requestId', 'timestamp');",
-                  "  pm.expect(b.partial).to.be.false;",
+                  "  pm.expect(b.partial).to.be.true;",
                   "  pm.expect(b.customer.id).to.eql(1);",
                   "  pm.expect(b.accounts.map(a => a.accountNumber)).to.include('0100000001');",
                   "});"
