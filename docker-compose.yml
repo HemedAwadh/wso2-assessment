@@ -10,33 +10,38 @@ name: jamii
 
 services:
   accounts-db:
-    image: mysql:8.4
+    image: postgres:16-alpine
+    container_name: accounts_postgres  # Changed to match the service context (was local_postgres)
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-root}
-      MYSQL_DATABASE: ${ACCOUNTS_DB_NAME:-jamii_accounts}
-      MYSQL_USER: ${ACCOUNTS_DB_USER:-jamii_app}
-      MYSQL_PASSWORD: ${ACCOUNTS_DB_PASSWORD:-change-me-app}
+      # Postgres uses POSTGRES_USER as the superuser (replaces MYSQL_ROOT_PASSWORD)
+      POSTGRES_USER: ${ACCOUNTS_DB_USER:-jamii_app}
+      POSTGRES_PASSWORD: ${ACCOUNTS_DB_PASSWORD:-change-me-app}
+      POSTGRES_DB: ${ACCOUNTS_DB_NAME:-jamii_accounts}
     volumes:
+      # Postgres uses the exact same init directory structure as MySQL!
       - ./database/accounts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/accounts/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
-      - accounts-db-data:/var/lib/mysql
+      - accounts-db-data:/var/lib/postgresql/data
     ports:
-      - "${ACCOUNTS_DB_HOST_PORT:-3307}:3306"   # 3307 on the host to avoid clashing with a local MySQL
+      - "${ACCOUNTS_DB_HOST_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      # Replaced mysqladmin ping with pg_isready
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 30
 
+
   customer-mock:
-    build: ./mocks/customer-service
+    build: ./mocks/customer-service-springboot
     environment:
       SLOW_DELAY_MS: "15000"
     ports:
       - "3000:3000"
 
   soap-mock:
-    build: ./mocks/loan-eligibility-soap
+    build: ./mocks/loan-eligibility-soap-springboot
     ports:
       - "8088:8088"
 
@@ -60,7 +65,7 @@ services:
     build:
       context: ./infrastructure/docker/mi
     environment:
-      ACCOUNTS_DB_URL: "jdbc:mysql://accounts-db:3306/${ACCOUNTS_DB_NAME:-jamii_accounts}?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=3000&socketTimeout=5000"
+      ACCOUNTS_DB_URL: "jdbc:postgresql://accounts-db:5432/${ACCOUNTS_DB_NAME:-jamii_accounts}?sslmode=disable&connectTimeout=3&socketTimeout=5"
       ACCOUNTS_DB_USER: ${ACCOUNTS_DB_USER:-jamii_app}
       ACCOUNTS_DB_PASSWORD: ${ACCOUNTS_DB_PASSWORD:-change-me-app}
       CUSTOMER_BACKEND_URL: ${CUSTOMER_BACKEND_URL:-https://jsonplaceholder.typicode.com}

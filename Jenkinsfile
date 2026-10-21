@@ -54,7 +54,8 @@ pipeline {
         stage('Archive artifacts') {
             steps {
                 // These exact files are what gets deployed to dev and promoted to prod.
-                archiveArtifacts artifacts: 'mi/target/cars/*.car, dist/apim/*.zip', fingerprint: true
+                // Added customer-mock and soap-mock JARs to the archive list
+                archiveArtifacts artifacts: 'mi/target/cars/*.car, dist/apim/*.zip, mocks/customer-service-springboot/target/*.jar, mocks/loan-eligibility-soap-springboot/target/*.jar', fingerprint: true
             }
         }
 

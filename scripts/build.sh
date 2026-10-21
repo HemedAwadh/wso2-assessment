@@ -3,9 +3,9 @@
 #
 #   scripts/build.sh [--skip-tests] [--version 1.0.42]
 #
-#   MI    mvn clean install in mi/          -> mi/target/cars/*.car
-#   APIM  one apictl project per API, with the shared custom policies copied in,
-#         plus the API Product              -> dist/apim/<name>/ and dist/apim/<name>.zip
+#   MI             mvn clean install in mi/          -> mi/target/cars/*.car
+#   Spring Boot    mvn clean package in mock dirs    -> <service>/target/*.jar
+#   APIM           one apictl project per API...     -> dist/apim/<name>/ and dist/apim/<name>.zip
 set -euo pipefail
 SCRIPT_NAME=build
 source "$(dirname "$0")/lib/common.sh"
@@ -29,6 +29,18 @@ require mvn; require zip
 log "MI: mvn clean install (car.version=$VERSION)"
 mvn -B -q -f "$REPO_ROOT/mi/pom.xml" clean install -Dcar.version="$VERSION" -DskipTests="$SKIP_TESTS"
 ls -1 "$REPO_ROOT"/mi/target/cars/*.car | sed 's/^/  /' >&2
+
+# --- Spring Boot Mock Services ---------------------------------------------
+log "Building Spring Boot mock services..."
+for service in mocks/customer-service-springboot mocks/loan-eligibility-soap-springboot; do
+  if [[ -d "$REPO_ROOT/$service" ]]; then
+    log "$service: mvn clean package"
+    mvn -B -q -f "$REPO_ROOT/$service/pom.xml" clean package -DskipTests="$SKIP_TESTS"
+    ls -1 "$REPO_ROOT/$service/target/"*.jar 2>/dev/null | grep -v '\-plain\.jar$' | sed 's/^/  /' >&2 || true
+  else
+    warn "Directory $REPO_ROOT/$service not found, skipping."
+  fi
+done
 
 # --- API Manager -----------------------------------------------------------
 DIST="$REPO_ROOT/dist/apim"

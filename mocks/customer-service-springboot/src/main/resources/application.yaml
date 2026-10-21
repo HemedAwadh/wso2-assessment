@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: customer-service-springboot
+
+server:
+  port: 3000
+
+mock:
+  slow-delay: 6s

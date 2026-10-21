@@ -45,12 +45,25 @@ go_test() {
   fi
 }
 
+# mvn_test <dir relative to the repo>: runs mvn test for Spring Boot apps
+mvn_test() {
+  log "running mvn test in $1"
+  # Uses Maven Wrapper if present, otherwise falls back to system mvn
+  if [[ -f "$REPO_ROOT/$1/mvnw" ]]; then
+    (cd "$REPO_ROOT/$1" && ./mvnw -B test) || return 1
+  else
+    (cd "$REPO_ROOT/$1" && mvn -B test) || return 1
+  fi
+}
+
 run_unit() {
-  log "unit: mock services"
-  go_test mocks/customer-service || FAILED=1
-  go_test mocks/loan-eligibility-soap || FAILED=1
+  log "unit: Spring Boot mock services"
+  mvn_test mocks/customer-service-springboot || FAILED=1
+  mvn_test mocks/loan-eligibility-soap-springboot || FAILED=1
+
   log "unit: MI artifact tests"
   go_test mi/tests || FAILED=1
+
   log "unit: build/deploy helper CLI"
   go_test tools || FAILED=1
 }
