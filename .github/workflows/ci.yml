@@ -37,6 +37,7 @@ jobs:
           java-version: '17'
           cache: maven
 
+
       # 2. Setup Go for the remaining Go modules (tools/ and mi/tests/)
       - uses: actions/setup-go@v5
         with:
