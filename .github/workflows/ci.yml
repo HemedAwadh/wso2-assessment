@@ -139,5 +139,6 @@ jobs:
       - name: Deploy (dry run)
         run: |
           cp infrastructure/config/prod.env.example infrastructure/config/prod.env
+          ls -al
           scripts/deploy-mi.sh prod --dry-run
           scripts/deploy-apim.sh prod --dry-run
