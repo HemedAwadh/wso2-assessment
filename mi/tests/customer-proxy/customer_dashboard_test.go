@@ -71,10 +71,12 @@ func TestDashboardWholeResponseErrors(t *testing.T) {
 	}
 }
 
+
 func TestDashboardAccountsQueryIsParameterised(t *testing.T) {
 	ds := support.Parse(t, filepath.Join(support.MIRoot(), "account-balance/src/main/dataservice/AccountsDataService.dbs"))
 	sql := ds.Child("query", "id", "getAccountsByCustomer").Child("sql").Text
-	if !strings.Contains(sql, "WHERE customer_id = ?") || !strings.Contains(sql, "JSON_ARRAYAGG") {
+	// Updated to check for PostgreSQL's json_agg instead of MySQL's JSON_ARRAYAGG
+	if !strings.Contains(sql, "WHERE customer_id = ?") || !strings.Contains(sql, "json_agg") {
 		t.Errorf("unexpected query: %s", sql)
 	}
 }
